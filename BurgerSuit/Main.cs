@@ -12,22 +12,35 @@ namespace BurgerSuit {
         public const string MOD_ID = "blargle.BurgerSuit";
         public const string MOD_NAME = "Burger Suit";
         public const string MOD_VERSION = "0.0.1";
+        public static bool isRegistered = false;
 
-        public BurgerSuitMod() : base(MOD_ID, MOD_NAME, "blargle", MOD_VERSION, "1.1.2", Assembly.GetExecutingAssembly()) {
-            Debug.Log($"Mod loaded: {MOD_ID} {MOD_VERSION}");
-        }
+        public BurgerSuitMod() : base(MOD_ID, MOD_NAME, "blargle", MOD_VERSION, "1.1.2", Assembly.GetExecutingAssembly()) { }
 
-        protected override void OnInitialise() {
-            AddGameDataObject<BurgerSuitOutfit>();
+        protected override void Initialise() {
+            base.Initialise();
+            if (!isRegistered) {
+                Debug.Log($"{MOD_ID} v{MOD_VERSION}: initialized");
+                AddGameDataObject<BurgerSuitOutfit>();
+                isRegistered = true;
+            } else {
+                Debug.Log($"{MOD_ID} v{MOD_VERSION}: skipping re-registering");
+            }
         }
     }
 
     public class BurgerSuitOutfit : CustomPlayerCosmetic {
 
+        public static bool isRegistered = false;
+
         public override CosmeticType CosmeticType => CosmeticType.Outfit;
         public override GameObject Visual => ((Item)GDOUtils.GetExistingGDO(KitchenLib.References.ItemReferences.BurgerUnplated)).Prefab;
 
         public override void OnRegister(GameDataObject gameDataObject) {
+            if (isRegistered) {
+                Debug.Log($"{BurgerSuitMod.MOD_ID} v{BurgerSuitMod.MOD_VERSION}: skipping re-registering custom cosmetic");
+                return;
+            }
+
             GameObject prefab = ((PlayerCosmetic)gameDataObject).Visual;
             rotateAndScaleBurgerToCoverBody(prefab);
             hideObject(prefab, "Plate");
@@ -36,6 +49,8 @@ namespace BurgerSuit {
             makeCheeseVisibleOnSides(prefab);
             makePattyThicker(prefab);
             makeBunSitFlat(prefab);
+            isRegistered = true;
+            Debug.Log($"{BurgerSuitMod.MOD_ID} v{BurgerSuitMod.MOD_VERSION}: registered custom cosmetic");
         }
 
         private void rotateAndScaleBurgerToCoverBody(GameObject prefab) {
