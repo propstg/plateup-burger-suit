@@ -1,7 +1,9 @@
-﻿using KitchenData;
+﻿using Kitchen;
+using KitchenData;
 using KitchenLib;
 using KitchenLib.Customs;
 using KitchenLib.Utils;
+using KitchenMods;
 using System.Reflection;
 using UnityEngine;
 
@@ -11,33 +13,36 @@ namespace BurgerSuit {
 
         public const string MOD_ID = "blargle.BurgerSuit";
         public const string MOD_NAME = "Burger Suit";
-        public const string MOD_VERSION = "0.0.1";
-        public static bool isRegistered = false;
+        public const string MOD_VERSION = "0.0.4";
+        public const string MOD_AUTHOR = "blargle";
 
-        public BurgerSuitMod() : base(MOD_ID, MOD_NAME, "blargle", MOD_VERSION, "1.1.2", Assembly.GetExecutingAssembly()) { }
+        public BurgerSuitMod() : base(MOD_ID, MOD_NAME, MOD_AUTHOR, MOD_VERSION, ">=1.1.5", Assembly.GetExecutingAssembly()) { }
 
-        protected override void Initialise() {
-            base.Initialise();
-            if (!isRegistered) {
-                Debug.Log($"{MOD_ID} v{MOD_VERSION}: initialized");
-                AddGameDataObject<BurgerSuitOutfit>();
-                isRegistered = true;
-            } else {
-                Debug.Log($"{MOD_ID} v{MOD_VERSION}: skipping re-registering");
-            }
+        protected override void OnPostActivate(Mod mod) {
+            Debug.Log($"[{MOD_ID}] v{MOD_VERSION}: initialized");
+            AddGameDataObject<BurgerSuitOutfit>();
         }
     }
 
     public class BurgerSuitOutfit : CustomPlayerCosmetic {
 
+        public override string UniqueNameID => "BurgerSuit";
+
         public static bool isRegistered = false;
 
         public override CosmeticType CosmeticType => CosmeticType.Outfit;
-        public override GameObject Visual => ((Item)GDOUtils.GetExistingGDO(KitchenLib.References.ItemReferences.BurgerUnplated)).Prefab;
+        public override GameObject Visual { get {
+                GameObject gameObject = new GameObject();
+                gameObject.SetActive(false);
+                var prefab = Object.Instantiate(((Item) GDOUtils.GetExistingGDO(KitchenLib.References.ItemReferences.BurgerUnplated)).Prefab);
+                prefab.transform.ParentTo(gameObject);
+                return prefab;
+            }
+        }
 
         public override void OnRegister(GameDataObject gameDataObject) {
             if (isRegistered) {
-                Debug.Log($"{BurgerSuitMod.MOD_ID} v{BurgerSuitMod.MOD_VERSION}: skipping re-registering custom cosmetic");
+                Debug.Log($"[{BurgerSuitMod.MOD_ID}] v{BurgerSuitMod.MOD_VERSION}: skipping re-registering custom cosmetic");
                 return;
             }
 
@@ -49,8 +54,14 @@ namespace BurgerSuit {
             makeCheeseVisibleOnSides(prefab);
             makePattyThicker(prefab);
             makeBunSitFlat(prefab);
+
+            GameObject colourblind = GameObjectUtils.GetChildObject(prefab, "Colour Blind");
+            if (colourblind != null) {
+                colourblind.transform.localScale = new Vector3(1, 1, 1);
+            }
+
             isRegistered = true;
-            Debug.Log($"{BurgerSuitMod.MOD_ID} v{BurgerSuitMod.MOD_VERSION}: registered custom cosmetic");
+            Debug.Log($"[{BurgerSuitMod.MOD_ID}] v{BurgerSuitMod.MOD_VERSION} registered custom cosmetic");
         }
 
         private void rotateAndScaleBurgerToCoverBody(GameObject prefab) {
