@@ -1,4 +1,5 @@
-﻿using Kitchen;
+﻿using HarmonyLib;
+using Kitchen;
 using KitchenData;
 using KitchenLib;
 using KitchenLib.Customs;
@@ -13,10 +14,10 @@ namespace BurgerSuit {
 
         public const string MOD_ID = "blargle.BurgerSuit";
         public const string MOD_NAME = "Burger Suit";
-        public const string MOD_VERSION = "0.0.4";
+        public const string MOD_VERSION = "0.0.5";
         public const string MOD_AUTHOR = "blargle";
 
-        public BurgerSuitMod() : base(MOD_ID, MOD_NAME, MOD_AUTHOR, MOD_VERSION, ">=1.1.5", Assembly.GetExecutingAssembly()) { }
+        public BurgerSuitMod() : base(MOD_ID, MOD_NAME, MOD_AUTHOR, MOD_VERSION, ">=1.1.7", Assembly.GetExecutingAssembly()) { }
 
         protected override void OnPostActivate(Mod mod) {
             Debug.Log($"[{MOD_ID}] v{MOD_VERSION}: initialized");
@@ -40,13 +41,13 @@ namespace BurgerSuit {
             }
         }
 
-        public override void OnRegister(GameDataObject gameDataObject) {
+        public override void OnRegister(PlayerCosmetic gameDataObject) {
             if (isRegistered) {
                 Debug.Log($"[{BurgerSuitMod.MOD_ID}] v{BurgerSuitMod.MOD_VERSION}: skipping re-registering custom cosmetic");
                 return;
             }
 
-            GameObject prefab = ((PlayerCosmetic)gameDataObject).Visual;
+            GameObject prefab = gameDataObject.Visual;
             rotateAndScaleBurgerToCoverBody(prefab);
             hideObject(prefab, "Plate");
             hideObject(prefab, "Tomato - Chopped");
@@ -105,4 +106,16 @@ namespace BurgerSuit {
             }
         }
     }
+
+    [HarmonyPatch(typeof(PlayerCosmeticSubview), "UpdateData")]
+    public class FixMirrorPositionPatch {
+
+        public static void Postfix(PlayerCosmeticSubview __instance) {
+            Transform transform = __instance.transform.Find("Burger - Plated(Clone)(Clone)");
+            if (transform != null && __instance.transform.parent.name == "Container") {
+                transform.localPosition = new Vector3(0, -1.4f, -0.3f);
+            }
+        }
+    }
+
 }
